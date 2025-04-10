@@ -1,0 +1,120 @@
+---
+title: "Homework 1"
+author: "Andrea Domen"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "../Outputs")
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(Sleuth3)
+```
+
+### Q1
+
+**Ch 17 Exercise 7** <br>
+
+
+
+
+(a) The second PC seems to explain some of the variability between open and closed exams. This is because the closed exams are both positive and are *relatively* near in value. The open book exams were all negative, and with the exception of geometry, have similar values. It does not, however, give any indication of the size of the effect, only that a difference is present.
+
+(b) The first PC measures the overall performance on the exams as the coefficients are all positive and have similar values.
+
+(c) The first two PCs account for 80% of the variability.
+
+```{r}
+var <- c(679.2, 199.8, 102.6, 83.7, 31.8)
+var.tot <- sum(var)
+
+(var[1] + var[2])/var.tot
+```
+
+
+
+### Q2
+
+**Ch 17 Exercise 9** <br>
+
+PCs beyond PC1 and PC2 will be disregarded as the first two explain 91% of the variation within the dataset. For PC1, the average looks like a good proxy with a high correlation of -0.99. For PC2, the coefficients for M3 to M5 were exceptionally small and were disregarded. Coefficients for M7 through M13 had a similar magnitude as M1 and M2, just opposite signs. So those values were averaged and subtracted. This also had a good correlation value (0.96).
+
+Thus, the average is a good proxy for PC1 and the "ends" are a good proxy for PC2.
+
+```{r}
+attach(ex1708)
+pig <- ex1708[ , 2:ncol(ex1708)]   # isolate response variables
+cor(pig)                           # check correlations (spoiler: very correlated)
+
+pig.pca <- prcomp(pig)             # perform PCA
+summary(pig.pca)                   # check summary
+pig.pca$rotation[1,]               # check coefficients
+
+# pc 2 ----
+pig.pca$rotation[3:5,2] |> sum()   # pc2 coef m3:m5 are super tiny, disregard?
+pig.pca$rotation[7:13,2] |> sum()  # neg values are "large"
+pig.pca$rotation[1:2,2] |> sum()   # pos values are "large"
+
+# compare surrogates----
+## pc1 and avg
+avg <- apply(pig, 1, mean)         # apply proxy
+pc1 <- pig.pca$x[,1]               # isolate PC
+ggplot() +                         # check proxy against PC
+  geom_point(aes(x = pc1, y = avg)) 
+cor(pc1, avg)                      # check correlation between them
+
+## pc2 and ends
+ends <- apply(pig[, 1:2], 1, mean) - apply(pig[, 7:13], 1, mean)  # apply proxy
+pc2 <- pig.pca$x[, 2]             # isolate PC
+ggplot() +                        # graph proxy against pc
+  geom_point(aes(pc2, ends))      
+cor(pc2, ends)                    # check correlation
+detach(ex1708)
+```
+
+
+
+### Q3
+
+**Ch 17 Exercise 15** 
+
+(a)
+
+```{r}
+attach(ex1715)
+church <- ex1715[, 3:6]          # extract variables
+church.pc <- prcomp(church,      # perform PCA, data have different scales
+                    scale = TRUE)
+```
+
+(b) The first PC explains 73% of the variability.
+
+```{r}
+summary(church.pc)
+```
+
+
+(c) Attendance and people who describe themselves as strong members both have similar magnitude and sign, so they were grouped. Likewise, the number of secular organizations and average income have similar magnitude and sign, but are negative so these were grouped. This proxy was a good choice, as the correlation between the proxy and PC1 is 0.999.
+
+```{r}
+church.pc$rotation                # check coefficeints    
+church.scale <- scale(church)     # scale the original dataset
+pc1.prox <- apply(church.scale[, c(1, 3)], 1, mean) - apply(church.scale[, c(2, 4)], 1, mean)
+pc1 <- church.pc$x[,1]            # extract PC
+
+ggplot() +                        # graph
+  geom_point(aes(pc1, pc1.prox))
+cor(pc1, pc1.prox)                # check correlation
+```
+
+
+(d) There is strong evidence that *Distinctiveness* has an effect on the proxy. For every unit increase in *Distinctiveness* there is, on average, a 0.905 increase in the proxy. More direct interpretations are difficult as the proxy is from scaled data.
+
+```{r}
+church.lm <- lm(pc1.prox ~ Distinct) # fit model with scaled proxy and unscaled predictor
+summary(church.lm)       
+detach(ex1715)
+```
+
+
