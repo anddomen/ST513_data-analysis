@@ -1,0 +1,251 @@
+---
+title: "Homework 2"
+author: "Andrea Domen"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Q1
+
+**18.9** <br>
+
+```{r}
+# make 2x2 table
+samoa <- tibble(status       = c("Obese", "Not obese"),
+                CVD_death    = c(22, 22),
+                nonCVD_death = c(1179, 1409))
+```
+
+## a.
+### i.
+
+```{r}
+o.prop <- samoa[1, 2]/rowSums(samoa[2:3])[1]
+paste0("The proportion of CVD deaths in obese Samoan men is ", round(o.prop, 4))
+
+
+no.prop <- samoa[2, 2]/rowSums(samoa[2:3])[2]
+paste0("The proportion of CVD deaths in non-obese Samoan men is ", round(no.prop, 4))
+```
+
+### ii.
+
+```{r}
+n1 <- rowSums(samoa[2:3])[1]
+n2 <- rowSums(samoa[2:3])[2]
+
+# Calculate SE for confidence interval
+confint.std.er <- function(pi1, n1, pi2, n2){
+  a <- (pi1*(1-pi1))/n1
+  b <- (pi2*(1-pi2))/n2
+  
+  se.conf <- sqrt(a + b)
+  return(se.conf)
+}
+se.conf <- confint.std.er(o.prop, n1, no.prop, n2)[[1]]  # calculate the SE
+
+paste0("The standard error for the difference is ", 
+       round(se.conf, 4))
+```
+
+### iii.
+
+```{r}
+diff.prop <- o.prop - no.prop                       # difference in proportions
+interval <- 1.96*se.conf                            # interval to +/-
+
+paste0("The confidence interval is (", 
+       round(diff.prop-interval, 4)
+       , ", ", round(diff.prop+interval, 4), ")")
+```
+
+## b.
+
+```{r}
+c.prop <- colSums(samoa[,2:3])[1]/sum(rowSums(samoa[,2:3]))  # total proportion of CVD deaths
+
+#  use the SE with piC 
+std.error <- function(pi.c, n1, n2){
+  a <- (pi.c*(1-pi.c))/n1
+  b <- (pi.c*(1-pi.c))/n2
+  
+  se <- sqrt(a + b)
+  return(se)
+}
+
+se.pooled <- std.error(c.prop, n1, n2)
+
+z <- (diff.prop/se.pooled)[[1]]
+
+p.val <- pnorm(z, lower.tail = FALSE)
+paste0("The p value is ", round(p.val,4), ", which is above the sigificance level of 0.05.")
+
+```
+
+## c.
+
+### i.
+
+```{r}
+obese.w <- o.prop/(1-o.prop)
+paste0("The sample odds of CVD death in obese Samoan men is ", round(obese.w, 4))
+
+nonob.w <- no.prop/(1-no.prop)
+paste0("The sample odds of CVD death in non-obese Samoan men is ", round(nonob.w, 4))
+```
+
+### ii.
+
+```{r}
+odds.ratio <- obese.w/nonob.w
+paste0("The odds ratio is ", round(odds.ratio, 4))
+```
+
+### iii.
+
+```{r}
+se.log.pooled <- function(pi.c, n1, n2){
+  a <- 1/(n1*pi.c*(1-pi.c))
+  b <- 1/(n2*pi.c*(1-pi.c))
+  
+  se.log <- sqrt(a + b)
+}
+
+se.pooled <- se.log.pooled(c.prop, n1, n2)
+paste0("The standard error for the log odds ratio is ", round(se.pooled,4))
+```
+
+### iv.
+
+```{r}
+se.log.conf <- function(pi1, n1, pi2, n2){
+  a <- 1/(n1*pi1*(1-pi1))
+  b <- 1/(n2*pi2*(1-pi2))
+  
+  se.log <- (sqrt(a + b))[[1]]
+}
+
+log.se <- se.log.conf(o.prop, n1, no.prop, n2)
+
+log.odds <- (log(odds.ratio))[[1]]
+log.interval <- 1.96*log.se
+
+paste0("The confidence interval for the log odds ratio is (", 
+       round(log.odds-log.interval, 4)
+       , ", ", round(log.odds+log.interval, 4), ")")
+
+```
+
+d.  When considering the results of the difference in proportions, there is no evidence that obese Samoan men died more frequently of CVD ($p=0.28$) with proportion of obese Samoan men that died of CVD being 1.8%, compared to the non-obese proportion of 1.5%. This is also reflected in the confidence interval (-0.007, 0.0129), as it includes zero. The multiplicative difference also showed there was no difference, with obese Samoan men having an odds ratio of 1.19 and a log odds ratio confidence interval that overlapped zero (-0.4178, 0.7742).
+
+# Q2
+
+**Ch 18 Ex 12** <br>
+
+```{r}
+p.unvax = 0.00369
+p.vax = 0.001
+```
+
+a.  
+
+```{r}
+w.unvax <- p.unvax/p.vax
+paste0("There is a ", w.unvax, " to 1 ratio of disease for those who are unvaccinated.")
+```
+
+b.  
+
+```{r}
+n = 100000
+
+ppl.unvax <- n*p.unvax
+paste0(ppl.unvax, " people would get the disease without the vaccine.")
+```
+
+c.  
+
+```{r}
+ppl.vax <- n*p.vax
+paste0(ppl.vax, " people would get the disease with the vaccine.")
+```
+
+d.  
+
+```{r}
+protect <- (ppl.unvax - ppl.vax)/ppl.unvax
+paste0("The protective effect of the vaccine is ", round(protect,4))
+```
+
+e.  
+
+```{r}
+p.unvax = 0.48052
+p.vax = 0.2
+
+w.unvax <- p.unvax/p.vax
+paste0("There is a ", w.unvax, " to 1 ratio of disease for those who are unvaccinated.")
+
+n = 100000
+
+ppl.unvax <- n*p.unvax
+paste0(ppl.unvax, " people would get the disease without the vaccine.")
+
+ppl.vax <- n*p.vax
+paste0(ppl.vax, " people would get the disease with the vaccine.")
+
+protect <- (ppl.unvax - ppl.vax)/ppl.unvax
+paste0("The protective effect of the vaccine is ", round(protect,4))
+```
+
+# Q3
+**Ch 16 Ex 16** <br>
+
+## a.
+```{r}
+crime.df <- tibble(status = c("Abuse victim", "Control"),
+                   crime_involved = c(102, 53),
+                   not_involved = c(806, 614))
+
+# Calculate needed proportions
+prop.abused <- (crime.df[1,2]/rowSums(crime.df[1, 2:3]))[[1]]
+prop.not.abused <- (crime.df[2,2]/rowSums(crime.df[2, 2:3]))[[1]]
+prop.c <- colSums(crime.df[,2:3])[[1]]/sum(rowSums(crime.df[,2:3]))[[1]]
+
+# get observation numbers
+n1 <- rowSums(crime.df[1, 2:3])
+n2 <- rowSums(crime.df[2, 2:3])
+
+# calculate SE for hypothesis testing
+se.abused.pooled <- std.error(prop.c, n1, n2)
+
+z.abused <- (prop.abused - prop.not.abused)/se.abused.pooled
+
+p.value <- 2*pnorm(z.abused, lower.tail = FALSE) # two-sided alternative 
+paste0("The two sided p value is ", round(p.value, 4), ", which is lower than the specified significance level of 0.05.")
+```
+
+## b.
+```{r}
+w.abused <- prop.abused/(1-prop.abused)
+w.notabused <- prop.not.abused/(1-prop.not.abused)
+
+odds <- w.abused/w.notabused
+log.odds <- log(odds)
+
+se.log.abused <- se.log.pooled(prop.c, n1, n2)
+
+z.log <- log.odds/se.log.abused
+
+2*pnorm(z.log, lower.tail = FALSE)
+```
+
+## c.
+There is strong evidence that those who are abused commit more crimes than those who are not abused. This is true for both the difference in proportions and the odds ratio. Using the difference in proportions, people who were abused committed crimes at a higher proportion (11.2%) than those who were not abused (7.94%) ($p = 0.0304$). When it comes to the odds ratio, people who were abused had a higher odds ratio for committing crimes (1.46) than those who were not abused ($p=0.0254$). 
+
+These results should not be construed as causal. This study was a retrospective study and such inferences cannot be made. Only associations can be made. 
