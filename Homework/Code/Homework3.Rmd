@@ -3,6 +3,11 @@ title: "Homework3"
 author: "Andrea Domen"
 date: "`r Sys.Date()`"
 output: pdf_document
+knit: (function(inputFile, encoding) {
+      out_dir <- "../Outputs";
+      rmarkdown::render(inputFile,
+                        encoding=encoding,
+                        output_dir=file.path(dirname(inputFile), out_dir))})
 ---
 
 ```{r setup, include=FALSE}
@@ -12,7 +17,9 @@ library(Sleuth3)
 ```
 
 # Q1
+
 **Ch 19 Ex 11** <br>
+
 ```{r}
 crab <- tibble(crab_sp = c("Red crab", "Dungeness crab", "marginals"),
                parasite = c(5, 0, 5),
@@ -21,14 +28,20 @@ crab <- tibble(crab_sp = c("Red crab", "Dungeness crab", "marginals"),
 ```
 
 ## a
+
 ```{r}
 red.parasite.exp <- (crab$marginals[1]*crab$parasite[3])/crab$marginals[3]
 paste("The expected value for red crabs with parasites is", round(red.parasite.exp, 4))
 ```
 
-Since $Observed > Expected$, but the minimium of the marginals is 5, only $P(5)$ needs to be calculated.
+$H_0: \frac{\omega_{red\; crab\; parasite}}{\omega_{dungeness\; crab\; parasite}} =1$ <br>
+
+$H_a: \frac{\omega_{red\; crab\; parasite}}{\omega_{dungeness\; crab\; parasite}} >1$
+
+Since $Observed > Expected$, but the minimum of the marginals is 5, only $P(5)$ needs to be calculated.
 
 ## b
+
 ```{r}
 # great, the table I made above won't work for fisher.test so I guess I get to make it again
 crab.matrix <- matrix(c(5, 0, 312, 503), 2, 2)
@@ -36,11 +49,15 @@ fisher.test(crab.matrix, alternative = "greater")
 ```
 
 ## c
-There is strong evidence to suggest that Red crabs have significantly higher odds of being infected with parasites ($p = 0.008$) with 5 out of 317 (1.6%) of Red crabs infected compared with 0 out of 503 Dungeness crabs. 
 
+There is strong evidence to suggest that Red crabs have significantly higher odds of being infected with parasites ($p = 0.008$) with 5 out of 317 (1.6%) of Red crabs infected compared with 0 out of 503 Dungeness crabs. As there were no parasites on the Dungeness crabs, an odds ratio cannot be reported.
+
+\newpage
 
 # Q2
+
 **Ch 19 Ex 12** <br>
+
 ```{r}
 hunt <- tibble(behavior = c("Hunt alone", "Group hunt"),
                single_prey = c(17, 14),
@@ -48,29 +65,40 @@ hunt <- tibble(behavior = c("Hunt alone", "Group hunt"),
 ```
 
 ## a
+
 ```{r}
 hunt.matrix <- matrix(c(17, 14, 12, 7), 2, 2)
-prop.test(hunt.matrix)
+prop.test(hunt.matrix, alternative = "two.sided")
 ```
+
+$H_0: hunting\; strategies\; and\; prey\; are\; independent$ <br>
+
+$H_a: hunting\; strategies\; and\; prey\; are\; not\; independent$
+
 The hunting strategy (alone or in groups) is and prey type are independent from one another, with no significant association between the two ($p=0.78$).
 
 ## b
+
+$H_0: \frac{\omega_{hunt\; strategy}}{\omega_{prey\; sought}} =1$ <br>
+
+$H_a: \frac{\omega_{hunt\; strategy}}{\omega_{prey\; sought}} \neq 1$
+
 ```{r}
-hunt.expected <- rowSums(hunt.matrix)[1]*colSums(hunt.matrix)[1]/sum(hunt.matrix)
+fisher.test(hunt.matrix, alternative = "two.sided")
 ```
 
-Since $Observed > Expected$, values from $P(17:29)$ need to be calculated.
+Using Fisher's exact test, the hunting strategy (alone or in groups) is and prey type are independent from one another, with no significant association between the two ($p=0.77$). 
 
-```{r}
-fisher.test(hunt.matrix, alternative = "greater")
-fisher.test(hunt.matrix, alternative = "less")
-```
-
-There is no evidence that animals that hunt alone are more likely to catch single prey than animals that hunt in groups ($p=0.81$). Rather it is the opposite: Group-hunting animals caught single prey 14 out of 21 times (67%) compared to animals that hunted alone which caught single prey 17 out of 29 times (59%).
-
+\newpage
 
 # Q3
+
 **Ch 19 Ex 18** <br>
+
+$H_0: \frac{\omega_{i,\; female\; survival}}{\omega_{i,\; male\; survival}} = 1$ when controlling for age. <br>
+
+$H_a: \frac{\omega_{i,\; female\; survival}}{\omega_{i,\; male\; survival}} > 1$ when controlling for age.
+
 ```{r}
 donner <- ex1918
 
@@ -83,7 +111,4 @@ for (k in 1:6){
 mantelhaen.test(donner.array)
 ```
 
-With a common odds ratio of 0.258, there is no evidence that the odds of survival were higher for females than males when controlling for age ($p=0.09$). However, this is a borderline value at the chosen significance level. 
-
-
-
+With a common odds ratio of 0.258, there is no evidence that the odds of survival were higher for females than males when controlling for age ($p=0.09$). However, this is a borderline value at the chosen significance level.
