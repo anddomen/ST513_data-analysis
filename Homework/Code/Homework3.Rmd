@@ -1,0 +1,89 @@
+---
+title: "Homework3"
+author: "Andrea Domen"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(Sleuth3)
+```
+
+# Q1
+**Ch 19 Ex 11** <br>
+```{r}
+crab <- tibble(crab_sp = c("Red crab", "Dungeness crab", "marginals"),
+               parasite = c(5, 0, 5),
+               no_parasite = c(312, 503, 815),
+               marginals = c(317, 503, 820))
+```
+
+## a
+```{r}
+red.parasite.exp <- (crab$marginals[1]*crab$parasite[3])/crab$marginals[3]
+paste("The expected value for red crabs with parasites is", round(red.parasite.exp, 4))
+```
+
+Since $Observed > Expected$, but the minimium of the marginals is 5, only $P(5)$ needs to be calculated.
+
+## b
+```{r}
+# great, the table I made above won't work for fisher.test so I guess I get to make it again
+crab.matrix <- matrix(c(5, 0, 312, 503), 2, 2)
+fisher.test(crab.matrix, alternative = "greater")
+```
+
+## c
+There is strong evidence to suggest that Red crabs have significantly higher odds of being infected with parasites ($p = 0.008$) with 5 out of 317 (1.6%) of Red crabs infected compared with 0 out of 503 Dungeness crabs. 
+
+
+# Q2
+**Ch 19 Ex 12** <br>
+```{r}
+hunt <- tibble(behavior = c("Hunt alone", "Group hunt"),
+               single_prey = c(17, 14),
+               mult_prey = c(12, 7))
+```
+
+## a
+```{r}
+hunt.matrix <- matrix(c(17, 14, 12, 7), 2, 2)
+prop.test(hunt.matrix)
+```
+The hunting strategy (alone or in groups) is and prey type are independent from one another, with no significant association between the two ($p=0.78$).
+
+## b
+```{r}
+hunt.expected <- rowSums(hunt.matrix)[1]*colSums(hunt.matrix)[1]/sum(hunt.matrix)
+```
+
+Since $Observed > Expected$, values from $P(17:29)$ need to be calculated.
+
+```{r}
+fisher.test(hunt.matrix, alternative = "greater")
+fisher.test(hunt.matrix, alternative = "less")
+```
+
+There is no evidence that animals that hunt alone are more likely to catch single prey than animals that hunt in groups ($p=0.81$). Rather it is the opposite: Group-hunting animals caught single prey 14 out of 21 times (67%) compared to animals that hunted alone which caught single prey 17 out of 29 times (59%).
+
+
+# Q3
+**Ch 19 Ex 18** <br>
+```{r}
+donner <- ex1918
+
+donner.array <- array(NA, c(2, 2, 6))
+
+for (k in 1:6){
+  donner.array[, , k] <- as.matrix(donner[(2*(k-1) +1) : (2*k), 3:4])
+}
+
+mantelhaen.test(donner.array)
+```
+
+With a common odds ratio of 0.258, there is no evidence that the odds of survival were higher for females than males when controlling for age ($p=0.09$). However, this is a borderline value at the chosen significance level. 
+
+
+
